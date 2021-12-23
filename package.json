@@ -1,12 +1,15 @@
 {
   "name": "whatsupp",
+  "description": "WhatsApp 2.0 (WhatsApp clone)",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H 192.168.11.222",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
+  "author": "Sean Relampagos",
+  "license": "MIT",
   "dependencies": {
     "next": "12.0.7",
     "react": "17.0.2",
