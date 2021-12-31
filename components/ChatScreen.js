@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import TimeAgo from "timeago-react";
 import { Avatar, IconButton } from "@material-ui/core";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "../firebase";
@@ -10,11 +11,15 @@ import Message from "./Message";
 import { InsertEmoticonRounded, Mic } from "@material-ui/icons";
 import { useState } from "react";
 import firebase from "firebase";
+import getRecipientEmail from "../utils/getRecipientEmail";
+import { useRef } from "react";
 
 const ChatScreen = ({ chat, messages }) => {
   const [user] = useAuthState(auth);
   const [input, setInput] = useState("");
   const router = useRouter();
+  const endOfMessagesRef = useRef();
+
   const [messagesSnapshot] = useCollection(
     db
       .collection("chats")
@@ -22,7 +27,11 @@ const ChatScreen = ({ chat, messages }) => {
       .collection("messages")
       .orderBy("timestamp", "asc")
   );
-
+  const [recipientSnapshot] = useCollection(
+    db
+      .collection("users")
+      .where("email", "==", getRecipientEmail(chat.users, user))
+  );
   const showMessages = () => {
     if (messagesSnapshot) {
       return messagesSnapshot.docs.map((message) => (
@@ -40,6 +49,13 @@ const ChatScreen = ({ chat, messages }) => {
         <Message key={message.id} user={message.user} message={message} />
       ));
     }
+  };
+
+  const scrollToBottom = () => {
+    endOfMessagesRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   const sendMessage = (e) => {
@@ -61,15 +77,33 @@ const ChatScreen = ({ chat, messages }) => {
     });
 
     setInput("");
+    scrollToBottom();
   };
 
+  const recipient = recipientSnapshot?.docs?.[0]?.data();
+  const recipientEmail = getRecipientEmail(chat.users, user);
   return (
     <Container>
       <Header>
-        <Avatar />
+        {recipient ? (
+          <Avatar src={recipient?.photoURL} />
+        ) : (
+          <Avatar>{recipientEmail[0]}</Avatar>
+        )}
         <HeaderInformation>
-          <h3>test</h3>
-          <p>Last seen ...</p>
+          <h3>{recipientEmail}</h3>
+          {recipientSnapshot ? (
+            <p>
+              Last seen:{"  "}
+              {recipient?.lastSeen?.toDate() ? (
+                <TimeAgo datetime={recipient?.lastSeen?.toDate()} />
+              ) : (
+                "Unavailable"
+              )}
+            </p>
+          ) : (
+            <p>Loading...</p>
+          )}
         </HeaderInformation>
         <HeaderIcons>
           <IconButton>
@@ -84,7 +118,7 @@ const ChatScreen = ({ chat, messages }) => {
       <MessageContainer>
         {/* show messages */}
         {showMessages()}
-        <EndOfMessage />
+        <EndOfMessage ref={endOfMessagesRef} />
       </MessageContainer>
       <InputContainer>
         <InsertEmoticonRounded />
@@ -149,10 +183,10 @@ const HeaderInformation = styled.div`
   }
 `;
 
-const EndOfMessage = styled.div``;
-
+const EndOfMessage = styled.div`
+  margin-bottom: 50px;
+`;
 const HeaderIcons = styled.div``;
-
 const MessageContainer = styled.div`
   padding: 30px;
   background-color: #e5ded8;
