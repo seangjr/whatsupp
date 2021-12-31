@@ -68,7 +68,7 @@ const ChatScreen = ({ chat, messages }) => {
       <Header>
         <Avatar />
         <HeaderInformation>
-          <h3>ur mom</h3>
+          <h3>test</h3>
           <p>Last seen ...</p>
         </HeaderInformation>
         <HeaderIcons>
